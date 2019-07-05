@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { cpus } from 'os'
 
 const state = {
   todos: []
@@ -31,12 +30,44 @@ const actions = {
       })
       .then(res => res.data)
       .then(newTodo => commit('newTodo', newTodo))
+      .catch(err => console.error(err))
+  },
+  deleteTodo: ({ commit }, id) => {
+    return axios
+      .delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
+      .then(() => {
+        commit('removeTodo', id)
+      })
+      .catch(err => console.error(err))
+  },
+  filterTodos: ({ commit }, event) => {
+    const limit = parseInt(event.target.value)
+    return axios
+      .get(`https://jsonplaceholder.typicode.com/todos/?_limit=${limit}`)
+      .then(res => res.data)
+      .then(todos => commit('setTodos', todos))
+      .catch(err => console.error(err))
+  },
+  updateTodo: ({ commit }, updatedTodo) => {
+    // console.log(updatedTodo)
+    return axios
+      .put(`https://jsonplaceholder.typicode.com/todos/${updatedTodo.id}`, updatedTodo)
+      .then(res => res.data)
+      .then(updated => commit('updateTodo', updated))
+      .catch(err => console.error(err))
   }
 }
 
 const mutations = {
   setTodos: (state, todos) => (state.todos = todos),
-  newTodo: (state, todo) => (state.todos = [todo, ...state.todos])
+  newTodo: (state, todo) => (state.todos = [todo, ...state.todos]),
+  removeTodo: (state, id) => (state.todos = state.todos.filter(todo => todo.id !== id)),
+  updateTodo: (state, updatedTodo) => {
+    const index = state.todos.findIndex(todo => todo.id === updatedTodo.id)
+    if (index !== -1) {
+      state.todos.splice(index, 1, updatedTodo)
+    }
+  }
   /* 
     when commit is called and passed in ('setTodos', payload), VueX will pass in the state as the first argument and our payload as the second argument
     to allow us to mutate our state. 
